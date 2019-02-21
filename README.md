@@ -33,7 +33,7 @@ or set the following environment variables:
 
 ## Docker
 
-Run `docker run -e 'UPTIMEROBOT_API_KEY=...' -p 9705:9705 --read-only hnrd/uptimerobot_exporter`.
+Run `docker run -e 'UPTIMEROBOT_API_KEY=your_uptime_robot_api_key' -p 9705:9705 --read-only lekpamartin/uptimerobot_exporter`.
 
 ## docker-compose
 
@@ -43,10 +43,10 @@ Example compose file:
     
     services:
       exporter:
-        image: hnrd/uptimerobot_exporter
+        image: lekpamartin/uptimerobot_exporter
         restart: unless-stopped
         environment:
-          UPTIMEROBOT_API_KEY: u123456-1a2b3c4d5e6f7890abc12323
+          UPTIMEROBOT_API_KEY: your_uptime_robot_api_key
         ports:
           - 9705:9705
         read_only: true
