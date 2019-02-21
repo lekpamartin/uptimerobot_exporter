@@ -33,7 +33,7 @@ or set the following environment variables:
 
 ## Docker
 
-Run `docker run -e 'UPTIMEROBOT_API_KEY=your_uptime_robot_api_key' -p 9705:9705 --read-only lekpamartin/uptimerobot_exporter`.
+Run `docker run -d --name uptimerobot_exporter -e 'UPTIMEROBOT_API_KEY=your_uptime_robot_api_key' -p 9705:9705 --read-only lekpamartin/uptimerobot_exporter`.
 
 ## docker-compose
 

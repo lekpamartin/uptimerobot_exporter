@@ -1,3 +1,6 @@
+# FROM https://github.com/hnrd/uptimerobot_exporter/blob/master/exporter.py
+# Updated by Martin LEKPA
+
 import argparse
 import http.server
 import os
@@ -19,15 +22,32 @@ def fetch_data(api_key):
     )
     return req.json()
 
+def fetch_accountdetails(api_key):
+    params = {
+        'api_key': api_key,
+        'format': 'json',
+    }
+    req = requests.post(
+        'https://api.uptimerobot.com/v2/getAccountDetails',
+        data=params,
+    )
+    return req.json()
+
 
 def format_prometheus(data):
     result = ''
     for item in data:
-        result += 'uptimerobot_up{{name="{}",type="{}",url="{}"}} {}\n'.format(
+        result += 'uptimerobot_status{{c1_name="{}",c2_url="{}",c3_type="{}",c4_sub_type="{}",c5_keyword_type="{}",c6_keyword_value="{}",c7_http_username="{}",c8_port="{}",c9_interval="{}"}} {}\n'.format(
             item.get('friendly_name'),
-            item.get('type'),
             item.get('url'),
-            1 if item.get('status', 0) == 2 else 0,
+            item.get('type'),
+            item.get('sub_type'),
+            item.get('keyword_type'),
+            item.get('keyword_value'),
+            item.get('http_username'),
+            item.get('port'),
+            item.get('interval'),
+            0 if item.get('status', 0) == 2 else 1,
         )
         if item.get('status', 0) == 2:
             result += 'uptimerobot_response_time{{name="{}",type="{}",url="{}"}} {}\n'.format(
