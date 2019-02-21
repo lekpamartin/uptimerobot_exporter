@@ -9,6 +9,10 @@ import os
 import requests
 
 
+
+
+
+## Monitors
 def fetch_data(api_key):
     params = {
         'api_key': api_key,
@@ -21,18 +25,6 @@ def fetch_data(api_key):
         data=params,
     )
     return req.json()
-
-def fetch_accountdetails(api_key):
-    params = {
-        'api_key': api_key,
-        'format': 'json',
-    }
-    req = requests.post(
-        'https://api.uptimerobot.com/v2/getAccountDetails',
-        data=params,
-    )
-    return req.json()
-
 
 def format_prometheus(data):
     result = ''
@@ -59,14 +51,42 @@ def format_prometheus(data):
     return result
 
 
+
+## getAccountDetails
+def fetch_accountdetails(api_key):
+    params = {
+        'api_key': api_key,
+        'format': 'json',
+    }
+    req = requests.post(
+        'https://api.uptimerobot.com/v2/getAccountDetails',
+        data=params,
+    )
+    return req.json()
+
+
+def format_prometheus_accountdetails(data):
+    result = 'uptimerobot_accountdetails{name="%s",monitor_limit="%s",monitor_interval="%s",up_monitors="%s",down_monitors="%s",paused_monitors="%s"} 1\n' %(data['email'],data['monitor_limit'],data['monitor_interval'],data['up_monitors'],data['down_monitors'],data['paused_monitors'])
+    return result
+
+## End
+
+
+
+
+
 class ReqHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         answer = fetch_data(api_key)
+        accountdetails = fetch_accountdetails(api_key)
         self.send_response(200)
         self.send_header("Content-type", "text/plain")
         self.end_headers()
         self.wfile.write(
             format_prometheus(answer.get('monitors')).encode('utf-8')
+        )
+        self.wfile.write(
+            format_prometheus_accountdetails(accountdetails.get('account')).encode('utf-8')
         )
 
 
