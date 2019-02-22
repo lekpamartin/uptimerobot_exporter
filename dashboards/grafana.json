@@ -311,12 +311,12 @@
       "legend": {
         "alignAsTable": true,
         "avg": true,
-        "current": false,
-        "max": false,
+        "current": true,
+        "max": true,
         "min": true,
         "rightSide": true,
         "show": true,
-        "total": true,
+        "total": false,
         "values": true
       },
       "lines": true,
