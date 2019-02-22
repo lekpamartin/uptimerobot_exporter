@@ -29,6 +29,14 @@ def fetch_data(api_key):
 def format_prometheus(data):
     result = ''
     for item in data:
+        if item.get('status') == 0:
+           value = 2
+        elif item.get('status') == 1:
+           value = 1
+        elif item.get('status') == 2:
+           value = 0
+        else:
+           value = 3
         result += 'uptimerobot_status{{c1_name="{}",c2_url="{}",c3_type="{}",c4_sub_type="{}",c5_keyword_type="{}",c6_keyword_value="{}",c7_http_username="{}",c8_port="{}",c9_interval="{}"}} {}\n'.format(
             item.get('friendly_name'),
             item.get('url'),
@@ -39,7 +47,7 @@ def format_prometheus(data):
             item.get('http_username'),
             item.get('port'),
             item.get('interval'),
-            0 if item.get('status', 0) == 2 else 1,
+            value,
         )
         if item.get('status', 0) == 2:
             result += 'uptimerobot_response_time{{name="{}",type="{}",url="{}"}} {}\n'.format(
