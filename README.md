@@ -1,5 +1,7 @@
 # uptimerobot.com prometheus exporter
 
+![Grafana Dashboard](dashboards/dashboard.PNG?raw=true "Grafana Dashboard")
+
 Exports all your uptimerobot.com checks for prometheus scraping,
 so you can use external, third-party checks in your monitoring setup.
 
