@@ -81,12 +81,37 @@ def format_prometheus_accountdetails(data):
 
 
 
+## public status pages
+def fetch_psp(api_key):
+    params = {
+        'api_key': api_key,
+        'format': 'json',
+    }
+    req = requests.post(
+        'https://api.uptimerobot.com/v2/getPSPs',
+        data=params,
+    )
+    return req.json()
+
+
+def format_prometheus_psp(data):
+  result = ''
+  for item in data:
+    result += 'uptimerobot_psp{{c1_name="{}",c2_custom_url="{}",c3_standard_url="{}",c4_monitors="{}",c5_sort="{}"}} {}\n'.format(item.get('friendly_name'),item.get('custom_url'),item.get('standard_url'),item.get('monitors'),item.get('sort'),item.get('status'))
+  return result
+
+## End
+
+
+
+
 
 
 class ReqHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         answer = fetch_data(api_key)
         accountdetails = fetch_accountdetails(api_key)
+        psp = fetch_psp(api_key)
         self.send_response(200)
         self.send_header("Content-type", "text/plain")
         self.end_headers()
@@ -95,6 +120,9 @@ class ReqHandler(http.server.BaseHTTPRequestHandler):
         )
         self.wfile.write(
             format_prometheus_accountdetails(accountdetails.get('account')).encode('utf-8')
+        )
+        self.wfile.write(
+            format_prometheus_psp(psp.get('psps')).encode('utf-8')
         )
 
 
