@@ -5,10 +5,6 @@
 Exports all your uptimerobot.com checks for prometheus scraping,
 so you can use external, third-party checks in your monitoring setup.
 
-*Caveat: This does not (yet) handle paging, so if you have a Pro account
-with uptimerobot.com you might have more checks defined than this script
-will handle.*
-
 If you do not have a pro account, any scrape interval shorter than
 `scrape_interval: 5m` for this exporter will a) produce duplicated data
 and b) misuse uptimerobots API.
