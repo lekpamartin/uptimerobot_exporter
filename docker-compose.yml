@@ -4,6 +4,7 @@ services:
   uptimerobot_exporter:
     build: .
     restart: unless-stopped
+    net: host
     environment:
       UPTIMEROBOT_API_KEY: yourkeyhere
     ports:
