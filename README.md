@@ -1,4 +1,4 @@
-# uptimerobot.com prometheus exporter
+# uptimerobot.com prometheus exporter 
 
 ![Grafana Dashboard](dashboards/dashboard.PNG?raw=true "Grafana Dashboard")
 
