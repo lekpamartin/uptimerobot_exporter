@@ -51,6 +51,14 @@ Example compose file:
           - 9705:9705
         read_only: true
 
+## Exported data
+* number of down monitors : down_monitors
+* number of up monitors : up_monitors
+* number of paused monitors : paused_monitors
+* Maximum monitor : monitor_limit
+* Monitor status (Monitors) : name, url, type, [keyword], [keyword_value], interval, status (color change with status)
+* Responste time : Minimum (min), maximum (max), average (avg) and current
+* public status page (psp)
 
 ## Docs
 Forked from https://github.com/hnrd/uptimerobot_exporter.git
