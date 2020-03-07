@@ -22,20 +22,13 @@ Accepted parameters:
 * server_name (optional): Name to bind the HTTP server to. Default: 0.0.0.0
 * server_port (optional): Port to bind the HTTP server to. Default: 9705
 
-You can either pass script arguments (run `python exporter.py -h` for an explanation)
-or set the following environment variables:
-
-* `UPTIMEROBOT_API_KEY`
-* `UPTIMEROBOT_SERVER_NAME`
-* `UPTIMEROBOT_SERVER_PORT`
-
-## Docker
+### Docker
 
 ```bash
 docker run -d --name uptimerobot_exporter -e 'UPTIMEROBOT_API_KEY=your_uptime_robot_api_key' -p 9705:9705 --read-only lekpamartin/uptimerobot_exporter
 ```
 
-## docker-compose
+#### docker-compose
 
 Example compose file:
 
@@ -51,6 +44,14 @@ Example compose file:
           - 9705:9705
         read_only: true
 
+### Others
+You can either pass script arguments (run `python exporter.py -h` for an explanation)
+or set the following environment variables:
+
+* `UPTIMEROBOT_API_KEY`
+* `UPTIMEROBOT_SERVER_NAME`
+* `UPTIMEROBOT_SERVER_PORT`
+
 ## Exported data
 * number of down monitors : down_monitors
 * number of up monitors : up_monitors
@@ -59,6 +60,13 @@ Example compose file:
 * Monitor status (Monitors) : name, url, type, [keyword], [keyword_value], interval, status (color change with status)
 * Responste time : Minimum (min), maximum (max), average (avg) and current
 * public status page (psp)
+
+## Grafana / Prometheus
+1. Deploy exporter
+2. Add target in prometheus
+3. Add prometheus Data source in grafana
+4. Import Grafana dashboard (import json or ID 9955)
+Enjoy !!!
 
 ## Docs
 Forked from https://github.com/hnrd/uptimerobot_exporter.git
