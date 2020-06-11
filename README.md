@@ -1,5 +1,7 @@
 # uptimerobot.com prometheus exporter 
 
+[![Docker Image Version (latest semver)](https://img.shields.io/docker/v/lekpamartin/uptimerobot_exporter)](https://hub.docker.com/r/lekpamartin/uptimerobot_exporter/tags)
+
 ![Grafana Dashboard](dashboards/dashboard.PNG?raw=true "Grafana Dashboard")
 
 Exports all your uptimerobot.com checks for prometheus scraping,
