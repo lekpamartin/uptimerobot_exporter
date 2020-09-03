@@ -13,18 +13,32 @@ import requests
 
 
 ## Monitors
-def fetch_data(api_key):
+def _fetch_paginated(offset, api_key):
     params = {
         'api_key': api_key,
         'format': 'json',
         'response_times': 1,
         'response_times_limit': 1,
+        'offset': offset,
     }
-    req = requests.post(
+    return requests.post(
         'https://api.uptimerobot.com/v2/getMonitors',
         data=params,
-    )
-    return req.json()
+    ).json()
+
+def fetch_data(api_key):
+    monitors = {'monitors':[]}
+    offset = 0
+    response = _fetch_paginated(offset, api_key)
+    for monitor in response['monitors']:
+        monitors['monitors'].append(monitor)
+
+    while response['monitors']:
+        offset = offset + 50
+        response = _fetch_paginated(offset, api_key)
+        for monitor in response['monitors']:
+            monitors['monitors'].append(monitor)
+    return monitors
 
 def format_prometheus(data):
     result = ''
