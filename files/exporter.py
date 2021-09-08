@@ -63,7 +63,7 @@ def format_prometheus(data):
             item.get('interval'),
             value,
         )
-        if item.get('status', 0) == 2:
+        if item.get('status', 0) == 2 and item.get('response_times'):
             result += 'uptimerobot_response_time{{name="{}",type="{}",url="{}"}} {}\n'.format(
                 item.get('friendly_name'),
                 item.get('type'),
