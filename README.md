@@ -71,4 +71,4 @@ or set the following environment variables:
 Enjoy !!!
 
 ## Docs
-Forked from https://github.com/hnrd/uptimerobot_exporter.git
+Forked from https://github.com/hnrd/uptimerobot_exporter.git 
