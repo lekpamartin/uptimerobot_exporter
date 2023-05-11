@@ -9,10 +9,32 @@ import os
 import requests
 
 
+def _escape_strings(data: dict):
+    """
+    Escape a give string with quotes with a single backslash regarding to the prometheus format description
+    https://github.com/prometheus/docs/blob/main/content/docs/instrumenting/exposition_formats.md#text-format-details
+
+    From the docs:
+    label_value can be any sequence of UTF-8 characters, but the backslash (\\), double-quote ("), and line feed (\n)
+    characters have to be escaped as \\, \", and \n, respectively.
+
+    :param data: python dictionary containing strings
+    :return: dict which contains strings with correctly escaped quotes
+    """
+    translate_map = str.maketrans({
+        "\\": "\\\\",
+        '"': '\\"',
+        "\n":  "\\n",
+    })
+
+    escape_dict = data
+    for key in escape_dict:
+        if type(escape_dict.get(key)) is str:
+            escape_dict[key] = escape_dict[key].translate(translate_map)
+    return escape_dict
 
 
-
-## Monitors
+# Monitors
 def _fetch_paginated(offset, api_key):
     params = {
         'api_key': api_key,
@@ -33,13 +55,13 @@ def fetch_data(api_key):
     offset = 0
     response = _fetch_paginated(offset, api_key)
     for monitor in response['monitors']:
-        monitors['monitors'].append(monitor)
+        monitors['monitors'].append(_escape_strings(monitor))
 
     while response['monitors']:
         offset = offset + 50
         response = _fetch_paginated(offset, api_key)
         for monitor in response['monitors']:
-            monitors['monitors'].append(monitor)
+            monitors['monitors'].append(_escape_strings(monitor))
     return monitors
 
 
