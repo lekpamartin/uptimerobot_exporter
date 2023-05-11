@@ -21,13 +21,15 @@ def _fetch_paginated(offset, api_key):
         'response_times_limit': 1,
         'offset': offset,
     }
+
     return requests.post(
         'https://api.uptimerobot.com/v2/getMonitors',
         data=params,
     ).json()
 
+
 def fetch_data(api_key):
-    monitors = {'monitors':[]}
+    monitors = {'monitors': []}
     offset = 0
     response = _fetch_paginated(offset, api_key)
     for monitor in response['monitors']:
@@ -40,38 +42,30 @@ def fetch_data(api_key):
             monitors['monitors'].append(monitor)
     return monitors
 
+
 def format_prometheus(data):
     result = ''
     for item in data:
         if item.get('status') == 0:
-           value = 2
+            value = 2
         elif item.get('status') == 1:
-           value = 1
+            value = 1
         elif item.get('status') == 2:
-           value = 0
+            value = 0
         else:
-           value = 3
-        result += 'uptimerobot_status{{c1_name="{}",c2_url="{}",c3_type="{}",c4_sub_type="{}",c5_keyword_type="{}",c6_keyword_value="{}",c7_http_username="{}",c8_port="{}",c9_interval="{}"}} {}\n'.format(
-            item.get('friendly_name'),
-            item.get('url'),
-            item.get('type'),
-            item.get('sub_type'),
-            item.get('keyword_type'),
-            item.get('keyword_value'),
-            item.get('http_username'),
-            item.get('port'),
-            item.get('interval'),
-            value,
-        )
-        if item.get('status', 0) == 2 and item.get('response_times'):
-            result += 'uptimerobot_response_time{{name="{}",type="{}",url="{}"}} {}\n'.format(
-                item.get('friendly_name'),
-                item.get('type'),
-                item.get('url'),
-                item.get('response_times').pop().get('value'),
-            )
-    return result
+            value = 3
 
+        result += f'uptimerobot_status{{c1_name="{item.get("friendly_name")}",c2_url="{item.get("url")}"' \
+                  f',c3_type="{item.get("type")}",c4_sub_type="{item.get("sub_type")}",' \
+                  f'c5_keyword_type="{item.get("keyword_type")}",c6_keyword_value="{item.get("keyword_value")}",' \
+                  f'c7_http_username="{item.get("http_username")}",c8_port="{item.get("port")}",' \
+                  f'c9_interval="{item.get("interval")}"}} {value}\n'
+
+        if item.get('status', 0) == 2 and item.get('response_times'):
+            result += f'uptimerobot_response_time{{name="{item.get("friendly_name")}",type="{item.get("type")}",' \
+                      f'url="{item.get("url")}"}} {item.get("response_times").pop().get("value")}\n'
+
+    return result
 
 
 ## getAccountDetails
@@ -88,11 +82,11 @@ def fetch_accountdetails(api_key):
 
 
 def format_prometheus_accountdetails(data):
-    result = 'uptimerobot_accountdetails{name="%s",monitor_limit="%s",monitor_interval="%s",up_monitors="%s",down_monitors="%s",paused_monitors="%s"} 1\n' %(data['email'],data['monitor_limit'],data['monitor_interval'],data['up_monitors'],data['down_monitors'],data['paused_monitors'])
+    result = f'uptimerobot_accountdetails{{name="{data["email"]}",monitor_limit="{data["monitor_limit"]}",' \
+             f'monitor_interval="{data["monitor_interval"]}",up_monitors="{data["up_monitors"]}",' \
+             f'down_monitors="{data["down_monitors"]}",paused_monitors="{data["paused_monitors"]}"}} 1\n'
+
     return result
-
-## End
-
 
 
 ## public status pages
@@ -109,16 +103,12 @@ def fetch_psp(api_key):
 
 
 def format_prometheus_psp(data):
-  result = ''
-  for item in data:
-    result += 'uptimerobot_psp{{c1_name="{}",c2_custom_url="{}",c3_standard_url="{}",c4_monitors="{}",c5_sort="{}"}} {}\n'.format(item.get('friendly_name'),item.get('custom_url'),item.get('standard_url'),item.get('monitors'),item.get('sort'),item.get('status'))
-  return result
-
-## End
-
-
-
-
+    result = ''
+    for item in data:
+        result += f'uptimerobot_psp{{c1_name="{item.get("friendly_name")}",c2_custom_url="{item.get("custom_url")}",' \
+                  f'c3_standard_url="{item.get("standard_url")}",c4_monitors="{item.get("monitors")}",' \
+                  f'c5_sort="{item.get("sort")}"}} {item.get("status")}\n'
+    return result
 
 
 class ReqHandler(http.server.BaseHTTPRequestHandler):
