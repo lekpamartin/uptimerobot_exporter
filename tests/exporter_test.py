@@ -4,7 +4,7 @@
 
 import unittest
 
-import exporter
+from files import exporter
 
 
 class Test(unittest.TestCase):

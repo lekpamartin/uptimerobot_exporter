@@ -5,5 +5,7 @@ stages:
   stage: test
   image: python:alpine
   script:
-    - "pip install requests"
-    - "cd files/ && python3 ../tests/exporter_test.py"
+    - python -m pip install requests types-requests flake8 mypy pytest
+    - flake8 .
+    - mypy .
+    - python3 -m pytest tests
