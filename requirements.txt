@@ -1,0 +1,7 @@
+requests
+types-requests
+flake8
+flake8_formatter_junit_xml
+mypy
+pytest
+pytest-cov
