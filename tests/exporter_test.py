@@ -2,12 +2,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import sys
 import unittest
 
 import exporter
-
-sys.path.append("files/")
 
 
 class Test(unittest.TestCase):
