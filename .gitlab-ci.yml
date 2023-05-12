@@ -5,5 +5,5 @@ stages:
   stage: test
   image: python:alpine
   script:
-    - 'pip install requests'
-    - 'python3 tests/exporter_test.py'
+    - "pip install requests"
+    - "python3 tests/exporter_test.py"

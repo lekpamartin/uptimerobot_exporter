@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.2.0
+    rev: v4.4.0
     hooks:
       - id: check-yaml
         stages: [commit]
@@ -15,21 +15,22 @@ repos:
       - id: trailing-whitespace
         stages: [commit]
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v2.6.2
+    rev: v3.0.0-alpha.9-for-vscode
     hooks:
       - id: prettier
         args:
           - --write
-  - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.9.2
+  - repo: https://github.com/PyCQA/flake8
+    rev: 6.0.0
     hooks:
       - id: flake8
         additional_dependencies: [flake8-docstrings]
   - repo: https://github.com/psf/black
-    rev: 22.3.0
+    rev: 23.3.0
     hooks:
       - id: black
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.942
+    rev: v1.3.0
     hooks:
       - id: mypy
+        additional_dependencies: [types-requests]
