@@ -8,11 +8,11 @@ jobs:
   buildx:
     # strategy:
     #   fail-fast: false
-      # 1 job at a time since cron depends on latest
-      # max-parallel: 1
-      # matrix:
-      #   tag:
-      #     - latest
+    # 1 job at a time since cron depends on latest
+    # max-parallel: 1
+    # matrix:
+    #   tag:
+    #     - latest
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo

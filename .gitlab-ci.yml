@@ -1,0 +1,38 @@
+stages:
+  - test
+
+"mypy":
+  stage: test
+  image: python:alpine
+  script:
+    - python -m pip install -r requirements.txt
+    - mkdir cov
+    - mypy --junit-xml cov/mypy.xml -v .
+  artifacts:
+    reports:
+      junit: cov/mypy.xml
+
+"flake8":
+  stage: test
+  image: python:alpine
+  script:
+    - python -m pip install -r requirements.txt
+    - mkdir cov
+    - flake8 --format junit-xml --output-file cov/flake8.xml .
+  artifacts:
+    reports:
+      junit: cov/flake8.xml
+
+"pytest":
+  stage: test
+  image: python:alpine
+  script:
+    - python -m pip install -r requirements.txt
+    - mkdir cov
+    - python3 -m pytest --junitxml=cov/pytest_junit.xml --cov=. --cov-report=xml:cov/pytest_cobertura.xml . -v
+  artifacts:
+    reports:
+      junit: cov/pytest_junit.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: cov/pytest_cobertura.xml
