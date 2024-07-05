@@ -1,4 +1,4 @@
-FROM python:alpine
+FROM python:3.12.4-alpine3.20
 LABEL maintainer="LEKPA"
 
 COPY files/exporter.py /exporter.py
