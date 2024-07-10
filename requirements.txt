@@ -5,3 +5,4 @@ flake8_formatter_junit_xml
 mypy
 pytest
 pytest-cov
+zipp>=3.19.1 # not directly required, pinned by Snyk to avoid a vulnerability
