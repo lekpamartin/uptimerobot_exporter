@@ -46,22 +46,34 @@ Metrics are served on `/metrics`.
 
 ### Docker
 
-Images are built for amd64, arm/v6, arm/v7 and arm64 and published on the
-[GitHub Container Registry](https://github.com/lekpamartin/uptimerobot_exporter/pkgs/container/uptimerobot_exporter):
+The image is published as a
+[GitHub package](https://github.com/lekpamartin/uptimerobot_exporter/pkgs/container/uptimerobot_exporter)
+on the GitHub Container Registry, for amd64, arm/v6, arm/v7 and arm64:
 
-- `latest`: last commit on `master`
-- `X.Y.Z` / `X.Y`: releases (tags `vX.Y.Z`)
+| Tag              | Content                              |
+| ---------------- | ------------------------------------ |
+| `latest`         | last commit on `master`              |
+| `X.Y.Z`, `X.Y`   | releases (git tags `vX.Y.Z`)         |
+| `sha-<commit>`   | a given commit                       |
+
+Every image is scanned with [Trivy](https://trivy.dev/) before being published.
+
+> The `lekpamartin/uptimerobot_exporter` image on Docker Hub is no longer updated,
+> use `ghcr.io/lekpamartin/uptimerobot_exporter` instead.
 
 ```bash
-docker run -d --name uptimerobot_exporter -e 'UPTIMEROBOT_API_KEY=your_uptime_robot_api_key' -p 9705:9705 --read-only ghcr.io/lekpamartin/uptimerobot_exporter
+docker pull ghcr.io/lekpamartin/uptimerobot_exporter:latest
+docker run -d --name uptimerobot_exporter -e 'UPTIMEROBOT_API_KEY=your_uptime_robot_api_key' -p 9705:9705 --read-only ghcr.io/lekpamartin/uptimerobot_exporter:latest
 ```
+
+Pin a release tag (e.g. `ghcr.io/lekpamartin/uptimerobot_exporter:1.0.0`) instead of `latest` in production.
 
 #### docker-compose
 
 ```yaml
 services:
   exporter:
-    image: ghcr.io/lekpamartin/uptimerobot_exporter
+    image: ghcr.io/lekpamartin/uptimerobot_exporter:latest
     restart: unless-stopped
     environment:
       UPTIMEROBOT_API_KEY: your_uptime_robot_api_key
