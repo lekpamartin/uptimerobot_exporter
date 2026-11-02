@@ -1,37 +1,90 @@
 name: Docker Image CI
 
 on:
+  push:
+    branches: [master]
+    tags: ["v*"]
+  pull_request:
   release:
-    types: [created]
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
-  buildx:
-    # strategy:
-    #   fail-fast: false
-    # 1 job at a time since cron depends on latest
-    # max-parallel: 1
-    # matrix:
-    #   tag:
-    #     - latest
+  test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@master
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
         with:
-          ref: ${{ github.ref }}
+          python-version: "3.13"
 
-      - name: Set Docker Tag
-        run: echo ::set-env name=TAG::${GITHUB_REF/refs\/tags\//}
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
 
-      - name: Docker login
-        uses: azure/docker-login@v1
+      - name: Lint
+        run: |
+          flake8 files tests
+          mypy files
+
+      - name: Test
+        run: python -m pytest -v tests
+
+  docker:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      DOCKERHUB_IMAGE: ${{ secrets.DOCKER_USERNAME && 'lekpamartin/uptimerobot_exporter' || '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-qemu-action@v3
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub
+        if: github.event_name != 'pull_request' && env.DOCKERHUB_IMAGE != ''
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build docker container
-        env:
-          DOCKER_CLI_EXPERIMENTAL: enabled
-        run: |
-          curl -fsSL https://raw.githubusercontent.com/pschmitt/ci-setup-docker-buildx/master/setup.sh | bash
-          ./build.sh ${{ matrix.tag }} -p
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/${{ github.repository }}
+            ${{ env.DOCKERHUB_IMAGE }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
