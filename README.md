@@ -48,7 +48,7 @@ Metrics are served on `/metrics`.
 
 The image is published as a
 [GitHub package](https://github.com/lekpamartin/uptimerobot_exporter/pkgs/container/uptimerobot_exporter)
-on the GitHub Container Registry, for amd64 and arm64:
+on the GitHub Container Registry, for amd64, arm/v6, arm/v7 and arm64:
 
 | Tag              | Content                              |
 | ---------------- | ------------------------------------ |
@@ -56,9 +56,8 @@ on the GitHub Container Registry, for amd64 and arm64:
 | `X.Y.Z`, `X.Y`   | releases (git tags `vX.Y.Z`)         |
 | `sha-<commit>`   | a given commit                       |
 
-The image is based on the [Docker Hardened Image](https://docs.docker.com/dhi/) for Python
-(no shell, no package manager, runs as a non-root user) and is scanned with
-[Trivy](https://trivy.dev/) before being published.
+The image is based on the official `python` Alpine image, without pip, runs as a
+non-root user and is scanned with [Trivy](https://trivy.dev/) before being published.
 
 > The `lekpamartin/uptimerobot_exporter` image on Docker Hub is no longer updated,
 > use `ghcr.io/lekpamartin/uptimerobot_exporter` instead.
@@ -86,12 +85,10 @@ services:
 
 #### Building the image
 
-The base images come from `dhi.io`, log in with your Docker Hub account first.
 No QEMU emulation is needed to build for another architecture:
 
 ```bash
-docker login dhi.io
-docker buildx build --platform linux/amd64,linux/arm64 -t uptimerobot_exporter .
+docker buildx build --platform linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64 -t uptimerobot_exporter .
 ```
 
 ### Others
