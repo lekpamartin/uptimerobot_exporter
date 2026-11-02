@@ -4,7 +4,10 @@ LABEL org.opencontainers.image.source="https://github.com/lekpamartin/uptimerobo
 LABEL org.opencontainers.image.description="UptimeRobot exporter for Prometheus"
 LABEL org.opencontainers.image.licenses="Apache-2.0"
 
-RUN pip install --no-cache-dir --upgrade pip requests
+# pip is not needed at runtime and ships vendored libraries (urllib3, msgpack,
+# setuptools) that are often flagged by vulnerability scanners
+RUN pip install --no-cache-dir requests \
+    && pip uninstall -y pip
 
 COPY files/exporter.py /exporter.py
 
