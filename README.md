@@ -59,8 +59,7 @@ on the GitHub Container Registry, for amd64, arm/v6, arm/v7 and arm64:
 The image is based on the official `python` Alpine image, without pip, runs as a
 non-root user and is scanned with [Trivy](https://trivy.dev/) before being published.
 
-> The `lekpamartin/uptimerobot_exporter` image on Docker Hub is no longer updated,
-> use `ghcr.io/lekpamartin/uptimerobot_exporter` instead.
+The image is also available on Docker Hub as `lekpamartin/uptimerobot_exporter`.
 
 ```bash
 docker pull ghcr.io/lekpamartin/uptimerobot_exporter:latest
@@ -85,11 +84,18 @@ services:
 
 #### Building the image
 
-No QEMU emulation is needed to build for another architecture:
+No QEMU emulation is needed to build for another architecture.
 
 ```bash
-docker buildx build --platform linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64 -t uptimerobot_exporter .
+# Build for the local platform
+./build.sh
+
+# Build for all platforms and push lekpamartin/uptimerobot_exporter:1.2.3 to Docker Hub
+docker login
+./build.sh 1.2.3 push
 ```
+
+`IMAGE_NAME` and `PLATFORMS` environment variables override the image name and platforms.
 
 ### Others
 
