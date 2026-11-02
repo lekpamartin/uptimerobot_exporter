@@ -48,7 +48,7 @@ Metrics are served on `/metrics`.
 
 The image is published as a
 [GitHub package](https://github.com/lekpamartin/uptimerobot_exporter/pkgs/container/uptimerobot_exporter)
-on the GitHub Container Registry, for amd64, arm/v6, arm/v7 and arm64:
+on the GitHub Container Registry, for amd64 and arm64:
 
 | Tag              | Content                              |
 | ---------------- | ------------------------------------ |
@@ -56,7 +56,9 @@ on the GitHub Container Registry, for amd64, arm/v6, arm/v7 and arm64:
 | `X.Y.Z`, `X.Y`   | releases (git tags `vX.Y.Z`)         |
 | `sha-<commit>`   | a given commit                       |
 
-Every image is scanned with [Trivy](https://trivy.dev/) before being published.
+The image is based on the [Docker Hardened Image](https://docs.docker.com/dhi/) for Python
+(no shell, no package manager, runs as a non-root user) and is scanned with
+[Trivy](https://trivy.dev/) before being published.
 
 > The `lekpamartin/uptimerobot_exporter` image on Docker Hub is no longer updated,
 > use `ghcr.io/lekpamartin/uptimerobot_exporter` instead.
@@ -80,6 +82,16 @@ services:
     ports:
       - 9705:9705
     read_only: true
+```
+
+#### Building the image
+
+The base images come from `dhi.io`, log in with your Docker Hub account first.
+No QEMU emulation is needed to build for another architecture:
+
+```bash
+docker login dhi.io
+docker buildx build --platform linux/amd64,linux/arm64 -t uptimerobot_exporter .
 ```
 
 ### Others
@@ -114,8 +126,13 @@ python files/exporter.py -h
 1. Deploy exporter
 2. Add target in prometheus
 3. Add prometheus Data source in grafana
-4. Import Grafana dashboard (import [dashboards/grafana.json](dashboards/grafana.json) or ID 9955)
-   and pick your Prometheus data source in the `Data source` variable.
+4. Import a Grafana dashboard and pick your Prometheus data source in the `Data source` variable:
+   - Grafana 13+: [dashboards/grafana-v2.json](dashboards/grafana-v2.json) (dashboard schema v2):
+     overview (exporter status, up/down/paused monitors, 24h uptime, monitor quota),
+     monitors table, status history, uptime and response times, public status pages
+     and exporter health. Filter by exporter instance, monitor type and monitor.
+   - Older Grafana versions: [dashboards/grafana.json](dashboards/grafana.json) (or ID 9955)
+
    Enjoy !!!
 
 ## Docs
