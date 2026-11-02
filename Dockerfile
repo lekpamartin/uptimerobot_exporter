@@ -12,4 +12,7 @@ USER nobody
 
 EXPOSE 9705
 
+# Targets / which does not call the UptimeRobot API
+HEALTHCHECK CMD wget -q -O /dev/null "http://127.0.0.1:${UPTIMEROBOT_SERVER_PORT:-9705}/" || exit 1
+
 CMD [ "python", "-u", "/exporter.py" ]
