@@ -1,76 +1,109 @@
 # uptimerobot.com prometheus exporter
 
-[![Docker Image Version (latest semver)](https://img.shields.io/docker/v/lekpamartin/uptimerobot_exporter)](https://hub.docker.com/r/lekpamartin/uptimerobot_exporter/tags)
+[![Docker Image CI](https://github.com/lekpamartin/uptimerobot_exporter/actions/workflows/dockerimage.yml/badge.svg)](https://github.com/lekpamartin/uptimerobot_exporter/actions/workflows/dockerimage.yml)
 
 ![Grafana Dashboard](dashboards/dashboard.PNG?raw=true "Grafana Dashboard")
 
 Exports all your uptimerobot.com checks for prometheus scraping,
 so you can use external, third-party checks in your monitoring setup.
 
-If you do not have a pro account, any scrape interval shorter than
-`scrape_interval: 5m` for this exporter will a) produce duplicated data
-and b) misuse uptimerobots API.
+The exporter uses the [UptimeRobot v3 API](https://uptimerobot.com/api/v3/).
+
+## Rate limits
+
+UptimeRobot limits API usage (10 requests/minute on the free plan, `monitor_limit × 2`
+on paid plans). Each refresh of the exporter costs 3 requests (monitors, account,
+public status pages), plus one request per up monitor when response times are enabled.
+
+API results are cached for `UPTIMEROBOT_CACHE_TTL` seconds (default: 60), so several
+Prometheus servers or a short `scrape_interval` do not multiply API calls. When
+UptimeRobot answers with HTTP 429, the exporter waits for the `Retry-After` delay
+before calling the API again and exposes `uptimerobot_up 0` meanwhile.
+
+On the free plan, monitors are checked every 5 minutes, so `scrape_interval: 5m`
+is enough.
 
 ## Requirements
 
-- Python
-- [requests](http://www.python-requests.org/en/master/)
+- Python 3.8+
+- [requests](https://requests.readthedocs.io/)
 
 ## Running
 
-Accepted parameters:
+Accepted parameters (argument / environment variable):
 
-- api_key: Your uptimerobot.com API key. See section 'API Settings' in [your account details](https://uptimerobot.com/dashboard#mySettings).
-- server_name (optional): Name to bind the HTTP server to. Default: 0.0.0.0
-- server_port (optional): Port to bind the HTTP server to. Default: 9705
+| Argument                 | Environment variable               | Default                          | Description                                                                                         |
+| ------------------------ | ---------------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `apikey`                 | `UPTIMEROBOT_API_KEY`              | (required)                       | Your API key, see [Integrations & API](https://dashboard.uptimerobot.com/integrations). A read-only key is enough. |
+| `--server_name`          | `UPTIMEROBOT_SERVER_NAME`          | `0.0.0.0`                        | Address to bind the HTTP server to                                                                  |
+| `--server_port`          | `UPTIMEROBOT_SERVER_PORT`          | `9705`                           | Port to bind the HTTP server to                                                                     |
+| `--cache_ttl`            | `UPTIMEROBOT_CACHE_TTL`            | `60`                             | Seconds during which API results are reused                                                         |
+| `--response_times`       | `UPTIMEROBOT_RESPONSE_TIMES`       | `false`                          | Export response times (one extra API request per up monitor)                                        |
+| `--response_time_window` | `UPTIMEROBOT_RESPONSE_TIME_WINDOW` | `3600`                           | Window in seconds used to compute min/avg/max response times                                        |
+| `--api_url`              | `UPTIMEROBOT_API_URL`              | `https://api.uptimerobot.com/v3` | API base URL                                                                                        |
+
+Metrics are served on `/metrics`.
 
 ### Docker
 
+Images are built for amd64, arm/v6, arm/v7 and arm64 and published on the
+[GitHub Container Registry](https://github.com/lekpamartin/uptimerobot_exporter/pkgs/container/uptimerobot_exporter):
+
+- `latest`: last commit on `master`
+- `X.Y.Z` / `X.Y`: releases (tags `vX.Y.Z`)
+
 ```bash
-docker run -d --name uptimerobot_exporter -e 'UPTIMEROBOT_API_KEY=your_uptime_robot_api_key' -p 9705:9705 --read-only lekpamartin/uptimerobot_exporter
+docker run -d --name uptimerobot_exporter -e 'UPTIMEROBOT_API_KEY=your_uptime_robot_api_key' -p 9705:9705 --read-only ghcr.io/lekpamartin/uptimerobot_exporter
 ```
 
 #### docker-compose
 
-Example compose file:
-
-    version: '2.1'
-
-    services:
-      exporter:
-        image: lekpamartin/uptimerobot_exporter
-        restart: unless-stopped
-        environment:
-          UPTIMEROBOT_API_KEY: your_uptime_robot_api_key
-        ports:
-          - 9705:9705
-        read_only: true
+```yaml
+services:
+  exporter:
+    image: ghcr.io/lekpamartin/uptimerobot_exporter
+    restart: unless-stopped
+    environment:
+      UPTIMEROBOT_API_KEY: your_uptime_robot_api_key
+    ports:
+      - 9705:9705
+    read_only: true
+```
 
 ### Others
 
-You can either pass script arguments (run `python exporter.py -h` for an explanation)
-or set the following environment variables:
-
-- `UPTIMEROBOT_API_KEY`
-- `UPTIMEROBOT_SERVER_NAME`
-- `UPTIMEROBOT_SERVER_PORT`
+```bash
+pip install requests
+python files/exporter.py -h
+```
 
 ## Exported data
 
-- number of down monitors : down_monitors
-- number of up monitors : up_monitors
-- number of paused monitors : paused_monitors
-- Maximum monitor : monitor_limit
-- Monitor status (Monitors) : name, url, type, [keyword], [keyword_value], interval, status (color change with status)
-- Responste time : Minimum (min), maximum (max), average (avg) and current
-- public status page (psp)
+| Metric                                                                  | Description                                                                                       |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `uptimerobot_status`                                                    | Monitor status: 0 = up, 1 = not checked yet, 2 = paused, 3 = down. Labels: name, url, type, keyword, interval… |
+| `uptimerobot_uptime{c10_days="1"}`                                      | Uptime percentage over the last 24 hours                                                          |
+| `uptimerobot_response_time`, `_min`, `_max`                             | Average, minimum and maximum response time (ms), only with `UPTIMEROBOT_RESPONSE_TIMES=true`      |
+| `uptimerobot_accountdetails`                                            | Account details (email, monitor limit, number of up/down/paused monitors) as labels               |
+| `uptimerobot_monitors{state}`                                           | Number of up, down and paused monitors                                                            |
+| `uptimerobot_monitor_limit`                                             | Maximum number of monitors                                                                        |
+| `uptimerobot_psp`                                                       | Public status pages (1 = enabled, 0 = paused)                                                     |
+| `uptimerobot_up`                                                        | 1 if the last API query succeeded                                                                 |
+| `uptimerobot_scrape_duration_seconds`                                   | Duration of the API queries                                                                       |
+
+### Migration from the v2 API based versions
+
+- Monitor types are now names (`HTTP`, `KEYWORD`, `PING`…) instead of numbers.
+- `uptimerobot_response_time` is disabled by default (see rate limits) and is now an average over `UPTIMEROBOT_RESPONSE_TIME_WINDOW`.
+- `uptimerobot_accountdetails` no longer has the `monitor_interval` label, `uptimerobot_psp` no longer has `c5_sort`.
 
 ## Grafana / Prometheus
 
 1. Deploy exporter
 2. Add target in prometheus
 3. Add prometheus Data source in grafana
-4. Import Grafana dashboard (import json or ID 9955)
+4. Import Grafana dashboard (import [dashboards/grafana.json](dashboards/grafana.json) or ID 9955)
+   and pick your Prometheus data source in the `Data source` variable.
    Enjoy !!!
 
 ## Docs

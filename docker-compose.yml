@@ -1,10 +1,8 @@
-version: "2.1"
-
 services:
   uptimerobot_exporter:
     build: .
+    image: ghcr.io/lekpamartin/uptimerobot_exporter:latest
     restart: unless-stopped
-    net: host
     environment:
       UPTIMEROBOT_API_KEY: yourkeyhere
     ports:
