@@ -46,22 +46,34 @@ Metrics are served on `/metrics`.
 
 ### Docker
 
-Images are built for amd64, arm/v6, arm/v7 and arm64 and published on the
-[GitHub Container Registry](https://github.com/lekpamartin/uptimerobot_exporter/pkgs/container/uptimerobot_exporter):
+The image is published as a
+[GitHub package](https://github.com/lekpamartin/uptimerobot_exporter/pkgs/container/uptimerobot_exporter)
+on the GitHub Container Registry, for amd64, arm/v6, arm/v7 and arm64:
 
-- `latest`: last commit on `master`
-- `X.Y.Z` / `X.Y`: releases (tags `vX.Y.Z`)
+| Tag              | Content                              |
+| ---------------- | ------------------------------------ |
+| `latest`         | last commit on `master`              |
+| `X.Y.Z`, `X.Y`   | releases (git tags `vX.Y.Z`)         |
+| `sha-<commit>`   | a given commit                       |
+
+The image is based on the official `python` Alpine image, without pip, runs as a
+non-root user and is scanned with [Trivy](https://trivy.dev/) before being published.
+
+The image is also available on Docker Hub as `lekpamartin/uptimerobot_exporter`.
 
 ```bash
-docker run -d --name uptimerobot_exporter -e 'UPTIMEROBOT_API_KEY=your_uptime_robot_api_key' -p 9705:9705 --read-only ghcr.io/lekpamartin/uptimerobot_exporter
+docker pull ghcr.io/lekpamartin/uptimerobot_exporter:latest
+docker run -d --name uptimerobot_exporter -e 'UPTIMEROBOT_API_KEY=your_uptime_robot_api_key' -p 9705:9705 --read-only ghcr.io/lekpamartin/uptimerobot_exporter:latest
 ```
+
+Pin a release tag (e.g. `ghcr.io/lekpamartin/uptimerobot_exporter:1.0.0`) instead of `latest` in production.
 
 #### docker-compose
 
 ```yaml
 services:
   exporter:
-    image: ghcr.io/lekpamartin/uptimerobot_exporter
+    image: ghcr.io/lekpamartin/uptimerobot_exporter:latest
     restart: unless-stopped
     environment:
       UPTIMEROBOT_API_KEY: your_uptime_robot_api_key
@@ -69,6 +81,21 @@ services:
       - 9705:9705
     read_only: true
 ```
+
+#### Building the image
+
+No QEMU emulation is needed to build for another architecture.
+
+```bash
+# Build for the local platform
+./build.sh
+
+# Build for all platforms and push lekpamartin/uptimerobot_exporter:1.2.3 to Docker Hub
+docker login
+./build.sh 1.2.3 push
+```
+
+`IMAGE_NAME` and `PLATFORMS` environment variables override the image name and platforms.
 
 ### Others
 
@@ -102,8 +129,13 @@ python files/exporter.py -h
 1. Deploy exporter
 2. Add target in prometheus
 3. Add prometheus Data source in grafana
-4. Import Grafana dashboard (import [dashboards/grafana.json](dashboards/grafana.json) or ID 9955)
-   and pick your Prometheus data source in the `Data source` variable.
+4. Import a Grafana dashboard and pick your Prometheus data source in the `Data source` variable:
+   - Grafana 13+: [dashboards/grafana-v2.json](dashboards/grafana-v2.json) (dashboard schema v2):
+     overview (exporter status, up/down/paused monitors, 24h uptime, monitor quota),
+     monitors table, status history, uptime and response times, public status pages
+     and exporter health. Filter by exporter instance, monitor type and monitor.
+   - Older Grafana versions: [dashboards/grafana.json](dashboards/grafana.json) (or ID 9955)
+
    Enjoy !!!
 
 ## Docs

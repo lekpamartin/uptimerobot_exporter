@@ -1,89 +1,66 @@
 #!/usr/bin/env bash
+#
+# Build the image and push it to Docker Hub:
+#   docker login
+#   ./build.sh 1.2.3 push
+#
+# Without "push", the image is only built for the local platform and loaded
+# into the local docker images.
 
 usage() {
-  echo "Usage: $0 [cron]"
+  cat <<EOF
+Usage: $0 [TAG] [push]
+
+  TAG    image tag (default: latest)
+  push   build for all platforms and push ${IMAGE_NAME}:TAG to Docker Hub
+
+Environment variables:
+  IMAGE_NAME  image name (default: lekpamartin/uptimerobot_exporter)
+  PLATFORMS   platforms to push (default: linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64)
+  DOCKERFILE  Dockerfile to use (default: Dockerfile)
+EOF
 }
 
-array_join() {
-  local IFS="$1"
-  shift
-  echo "$*"
-}
+set -euo pipefail
 
-get_available_architectures() {
-  local image="$1"
-  local tag="${2:-latest}"
+cd "$(readlink -f "$(dirname "$0")")"
 
-  docker buildx imagetools inspect --raw "${image}:${tag}" | \
-    jq -r '.manifests[].platform | .os + "/" + .architecture + "/" + .variant' | \
-    sed 's#/$##' | sort
-}
+IMAGE_NAME="${IMAGE_NAME:-lekpamartin/uptimerobot_exporter}"
+PLATFORMS="${PLATFORMS:-linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64}"
+DOCKERFILE="${DOCKERFILE:-Dockerfile}"
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]
-then
-  set -ex
+case "${1:-}" in
+  help | h | --help | -h)
+    usage
+    exit 0
+    ;;
+esac
 
-  cd "$(readlink -f "$(dirname "$0")")" || exit 9
+TAG="${1:-latest}"
+PUSH="${2:-}"
 
-  # Defaults
-  DOCKERFILE="${DOCKERFILE:-Dockerfile}"
-  IMAGE_NAME="${IMAGE_NAME:-lekpamartin/uptimerobot_exporter}"
-  TAG="${TAG:-latest}"
+BUILD_ARGS=(
+  --file "$DOCKERFILE"
+  --tag "${IMAGE_NAME}:${TAG}"
+  --label "org.opencontainers.image.version=${TAG}"
+  --label "org.opencontainers.image.revision=$(git rev-parse HEAD 2>/dev/null || echo unknown)"
+  --label "org.opencontainers.image.created=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+)
 
-  case "$1" in
-    latest)
-      DOCKERFILE=Dockerfile
-      TAG=latest
-      shift
-      ;;
-    help|h|--help|-h)
-      usage
-      exit 0
-      ;;
-  esac
+case "$PUSH" in
+  push | p | --push | -p)
+    # Multi-platform images cannot be loaded locally then pushed with
+    # `docker push`, buildx builds and pushes the multi-platform manifest at once
+    BUILD_ARGS+=(--platform "$PLATFORMS" --push)
+    ;;
+  "")
+    BUILD_ARGS+=(--load)
+    ;;
+  *)
+    usage
+    exit 1
+    ;;
+esac
 
-  EXTRA_BUILD_ARGS=()
-
-  case "$1" in
-    push|p|--push|-p)
-      EXTRA_BUILD_ARGS+=("--push")
-      ;;
-    *)
-      EXTRA_BUILD_ARGS+=("--load")
-      ;;
-  esac
-
-  # NOTE: Ookla doesn't provide binaries for ppcle64 or s390x
-  # read -r base_image base_tag <<< \
-  #   "$(sed -nr 's/^FROM\s+([^:]+):?((\w+).*)\s*$/\1 \3/p' "$DOCKERFILE" | head -1)"
-  # shellcheck disable=2207
-  # platforms=($(get_available_architectures "$base_image" "$base_tag"))
-  platforms=(
-    linux/amd64
-    linux/arm/v6
-    linux/arm/v7
-    linux/arm64/v8
-  )
-
-  BUILD_TYPE=manual
-
-  if [[ "$TRAVIS" == "true" ]]
-  then
-    BUILD_TYPE=travis
-    EXTRA_BUILD_ARGS+=("--no-cache")
-  elif [[ "$GITHUB_ACTIONS" == "true" ]]
-  then
-    BUILD_TYPE=github
-    EXTRA_BUILD_ARGS+=("--no-cache")
-  fi
-
-  docker buildx build \
-    --file "$DOCKERFILE" \
-    --platform "$(array_join "," "${platforms[@]}")" \
-    --label=built-by=billimek \
-    --label=build-type="$BUILD_TYPE" \
-    --label=built-on="$HOSTNAME" \
-    --tag "${IMAGE_NAME}:${TAG}" \
-    "${EXTRA_BUILD_ARGS[@]}" \
-    .
-fi
+set -x
+docker buildx build "${BUILD_ARGS[@]}" .
